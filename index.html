@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Checklist Aksi Perubahan</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,500;0,8..60,600;0,8..60,700;1,8..60,600&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+:root{
+  --navy:#17233F;
+  --navy-deep:#0C1526;
+  --gold:#C9A227;
+  --gold-light:#E6CC7A;
+  --paper:#F6F2E7;
+  --paper-line:#E2DAC4;
+  --card:#FFFDF8;
+  --text:#241F17;
+  --text-soft:#736B57;
+  --green:#2F6E4F;
+  --green-bg:#E6EEE7;
+  --amber:#B8860B;
+  --amber-bg:#F5EDD9;
+  --red:#A63D2F;
+  --red-bg:#F3E4DF;
+  --radius:10px;
+}
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  background:var(--paper);
+  background-image:
+    radial-gradient(circle at 100% 0%, rgba(201,162,39,0.08), transparent 45%),
+    radial-gradient(circle at 0% 100%, rgba(23,35,63,0.06), transparent 40%);
+  color:var(--text);
+  font-family:'Public Sans', sans-serif;
+  min-height:100vh;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 20px 80px;}
+
+.letterhead{
+  background:linear-gradient(180deg, var(--navy) 0%, var(--navy-deep) 100%);
+  color:#F3EFE2;
+  border-radius:14px;
+  padding:26px 28px;
+  position:relative;
+  overflow:hidden;
+  border:1px solid #0a1120;
+}
+.letterhead::before{
+  content:"";
+  position:absolute; inset:6px;
+  border:1px solid rgba(201,162,39,0.35);
+  border-radius:9px;
+  pointer-events:none;
+}
+.letterhead-top{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;flex-wrap:wrap;}
+.eyebrow{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--gold-light);opacity:.9;margin-bottom:6px;
+}
+.title-input{
+  font-family:'Source Serif 4', serif;
+  font-weight:700; font-size:26px;
+  background:transparent;border:none;color:#F8F5EA;
+  width:100%; max-width:520px; padding:2px 0;
+  border-bottom:1px dashed rgba(255,255,255,0.25);
+}
+.title-input:focus{outline:none;border-bottom-color:var(--gold);}
+.meta-grid{display:grid;grid-template-columns:repeat(2,minmax(160px,1fr));gap:8px 20px;margin-top:14px;max-width:520px;}
+.meta-field label{display:block;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:rgba(243,239,226,0.55);margin-bottom:3px;}
+.meta-field input{
+  width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.14);
+  border-radius:6px;color:#F3EFE2;padding:6px 8px;font-size:13px;font-family:inherit;
+}
+.meta-field input:focus{outline:none;border-color:var(--gold);}
+
+.progress-seal{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:120px;}
+.ring{position:relative;width:104px;height:104px;}
+.ring svg{transform:rotate(-90deg);}
+.ring-track{fill:none;stroke:rgba(255,255,255,0.12);stroke-width:8;}
+.ring-fill{fill:none;stroke:var(--gold);stroke-width:8;stroke-linecap:round;transition:stroke-dashoffset .5s ease;}
+.ring-label{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;}
+.ring-label b{font-family:'Source Serif 4',serif;font-size:22px;color:#F8F5EA;}
+.ring-label span{font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:rgba(243,239,226,0.6);}
+.progress-seal .caption{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:rgba(243,239,226,0.7);text-align:center;}
+
+.tabs{display:flex;gap:8px;margin:22px 0 16px;flex-wrap:wrap;}
+.tab{
+  font-family:'IBM Plex Mono',monospace;font-size:12.5px;
+  border:1px solid var(--paper-line);background:var(--card);color:var(--text-soft);
+  padding:9px 14px;border-radius:999px;cursor:pointer;display:flex;align-items:center;gap:8px;
+  transition:all .15s ease;
+}
+.tab .n{background:var(--paper-line);color:var(--text);border-radius:999px;padding:1px 7px;font-size:11px;}
+.tab.active{background:var(--navy);color:#F3EFE2;border-color:var(--navy);}
+.tab.active .n{background:var(--gold);color:var(--navy-deep);}
+.tab:hover:not(.active){border-color:var(--gold);color:var(--text);}
+
+.toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+.stage-title{font-family:'Source Serif 4',serif;font-size:19px;font-weight:600;}
+.stage-desc{font-size:12.5px;color:var(--text-soft);margin-top:2px;}
+.btn{
+  font-family:'Public Sans',sans-serif;font-size:13px;font-weight:600;
+  border:1px solid var(--navy);background:var(--navy);color:#F3EFE2;
+  padding:9px 16px;border-radius:8px;cursor:pointer;transition:.15s;
+}
+.btn:hover{background:var(--navy-deep);}
+.btn.ghost{background:transparent;color:var(--navy);}
+.btn.ghost:hover{background:rgba(23,35,63,0.06);}
+
+.list{display:flex;flex-direction:column;gap:10px;}
+.item{
+  background:var(--card);border:1px solid var(--paper-line);border-radius:var(--radius);
+  padding:14px 16px; position:relative; overflow:hidden;
+}
+.item.status-selesai{border-color:rgba(47,110,79,0.35);}
+.item-top{display:flex;gap:12px;align-items:flex-start;}
+.check{
+  width:24px;height:24px;flex:none;border-radius:6px;border:2px solid var(--paper-line);
+  cursor:pointer;display:flex;align-items:center;justify-content:center;margin-top:2px;
+  transition:.15s;background:#fff;
+}
+.check.proses{border-color:var(--amber);background:var(--amber-bg);}
+.check.selesai{border-color:var(--green);background:var(--green);}
+.check.selesai::after{content:"✓";color:#fff;font-size:14px;font-weight:700;}
+.check.proses::after{content:"";width:9px;height:9px;border-radius:50%;background:var(--amber);}
+.item-body{flex:1;min-width:0;}
+.item-text{
+  width:100%;border:none;background:transparent;font-size:14.5px;font-weight:600;
+  font-family:inherit;color:var(--text);padding:2px 0;
+}
+.item-text:focus{outline:none;border-bottom:1px dashed var(--gold);}
+.status-pill{
+  font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;
+  padding:3px 9px;border-radius:999px;display:inline-block;margin-top:6px;
+}
+.status-pill.belum{background:var(--red-bg);color:var(--red);}
+.status-pill.proses{background:var(--amber-bg);color:var(--amber);}
+.status-pill.selesai{background:var(--green-bg);color:var(--green);}
+
+.item-grid{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;margin-top:12px;}
+.field label{display:block;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-soft);margin-bottom:3px;}
+.field input{
+  width:100%;border:1px solid var(--paper-line);border-radius:6px;padding:7px 9px;
+  font-size:13px;font-family:inherit;background:#FBF9F3;color:var(--text);
+}
+.field input:focus{outline:none;border-color:var(--gold);background:#fff;}
+.del-btn{
+  align-self:end;background:transparent;border:1px solid var(--paper-line);color:var(--text-soft);
+  border-radius:6px;padding:7px 10px;cursor:pointer;font-size:12px;height:34px;
+}
+.del-btn:hover{border-color:var(--red);color:var(--red);}
+
+.evidence-section{margin-top:12px;border-top:1px dashed var(--paper-line);padding-top:12px;}
+.evidence-row{display:flex;gap:6px;align-items:center;}
+.evidence-row input{
+  flex:1;min-width:0;border:1px solid var(--paper-line);border-radius:6px;padding:7px 9px;
+  font-size:13px;font-family:inherit;background:#FBF9F3;color:var(--text);
+}
+.evidence-row input:focus{outline:none;border-color:var(--gold);background:#fff;}
+.upload-btn{
+  flex:none;height:34px;padding:0 12px;border-radius:6px;border:1px solid var(--paper-line);
+  background:#FBF9F3;color:var(--navy);cursor:pointer;font-size:13px;font-weight:600;
+  display:flex;align-items:center;gap:6px;justify-content:center;transition:.15s;white-space:nowrap;
+}
+.upload-btn:hover:not(:disabled){border-color:var(--gold);background:#fff;}
+.upload-btn:disabled{opacity:.5;cursor:wait;}
+.upload-hint{font-size:10.5px;color:var(--text-soft);margin-top:4px;}
+
+.attachments-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
+.attachment-chip{
+  display:flex;align-items:center;gap:6px;background:var(--amber-bg);border:1px solid rgba(184,134,11,0.3);
+  border-radius:999px;padding:5px 6px 5px 12px;font-size:12px;max-width:100%;
+}
+.attachment-chip a{color:var(--navy);text-decoration:none;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:220px;}
+.attachment-chip a:hover{text-decoration:underline;}
+.chip-del{
+  flex:none;width:18px;height:18px;border-radius:50%;border:none;background:rgba(0,0,0,0.08);
+  color:var(--text-soft);cursor:pointer;font-size:12px;line-height:1;display:flex;align-items:center;justify-content:center;
+}
+.chip-del:hover{background:var(--red);color:#fff;}
+
+.seal{
+  position:absolute;top:10px;right:14px;width:52px;height:52px;
+  opacity:0; transform:rotate(-14deg) scale(0.6);
+  transition:all .35s cubic-bezier(.2,1.4,.4,1);
+  pointer-events:none;
+}
+.item.status-selesai .seal{opacity:0.9;transform:rotate(-14deg) scale(1);}
+.seal circle{fill:none;stroke:var(--green);stroke-width:2;}
+.seal text{fill:var(--green);font-family:'IBM Plex Mono',monospace;font-size:6.3px;letter-spacing:1px;}
+.seal .center{fill:var(--green);font-family:'Source Serif 4',serif;font-weight:700;font-size:11px;text-anchor:middle;}
+
+.add-row{
+  border:1.5px dashed var(--paper-line);border-radius:var(--radius);padding:12px 16px;
+  display:flex;gap:10px;align-items:center;
+}
+.add-row input{
+  flex:1;border:none;background:transparent;font-size:14px;font-family:inherit;padding:6px 0;
+}
+.add-row input:focus{outline:none;}
+
+.empty{text-align:center;padding:40px 10px;color:var(--text-soft);}
+.empty b{color:var(--text);font-family:'Source Serif 4',serif;}
+
+.footnote{
+  margin-top:26px;padding:14px 16px;background:var(--card);border:1px solid var(--paper-line);
+  border-radius:var(--radius);font-size:12.5px;color:var(--text-soft);line-height:1.6;
+}
+.footnote b{color:var(--text);}
+.save-state{
+  font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-soft);
+  display:flex;align-items:center;gap:6px;
+}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--green);}
+.dot.saving{background:var(--amber);animation:pulse 1s infinite;}
+@keyframes pulse{50%{opacity:.3;}}
+
+@media (max-width:720px){
+  .item-grid{grid-template-columns:1fr 1fr;}
+  .del-btn{grid-column:span 2;}
+  .letterhead-top{flex-direction:column;}
+  .meta-grid{max-width:100%;}
+  .evidence-row{flex-wrap:wrap;}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div id="configBanner" style="display:none;background:var(--red-bg);border:1px solid var(--red);color:var(--red);border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:13px;line-height:1.6;">
+    <b>⚠ Belum tersambung ke Google Sheets tim.</b> Buka file HTML ini di teks editor, cari bagian <code>SCRIPT_URL</code> di dekat akhir file, dan isi dengan URL Web App dari Apps Script Anda.
+  </div>
+
+  <div class="letterhead">
+    <div class="letterhead-top">
+      <div style="flex:1;min-width:240px;">
+        <div class="eyebrow">Lembar Kendali · Proyek Perubahan</div>
+        <input id="projTitle" class="title-input" placeholder="Judul Aksi Perubahan..." />
+        <div class="meta-grid">
+          <div class="meta-field"><label>Project Leader</label><input id="mLeader" placeholder="Nama"></div>
+          <div class="meta-field"><label>Instansi</label><input id="mInstansi" placeholder="Unit kerja"></div>
+          <div class="meta-field"><label>Mentor</label><input id="mMentor" placeholder="Nama mentor"></div>
+          <div class="meta-field"><label>Coach</label><input id="mCoach" placeholder="Nama coach"></div>
+        </div>
+      </div>
+      <div class="progress-seal">
+        <div class="ring">
+          <svg width="104" height="104" viewBox="0 0 104 104">
+            <circle class="ring-track" cx="52" cy="52" r="44"></circle>
+            <circle id="ringFill" class="ring-fill" cx="52" cy="52" r="44" stroke-dasharray="276.5" stroke-dashoffset="276.5"></circle>
+          </svg>
+          <div class="ring-label"><b id="pctText">0%</b><span>Selesai</span></div>
+        </div>
+        <div class="caption" id="countCaption">0 / 0 item</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs" id="tabs"></div>
+
+  <div class="toolbar">
+    <div>
+      <div class="stage-title" id="stageTitle">Tahap</div>
+      <div class="stage-desc" id="stageDesc"></div>
+    </div>
+    <div class="save-state"><span class="dot" id="saveDot"></span><span id="saveText">tersimpan</span></div>
+  </div>
+
+  <div class="list" id="list"></div>
+
+  <div class="add-row" style="margin-top:10px;">
+    <span style="color:var(--text-soft);font-size:18px;">+</span>
+    <input id="addInput" placeholder="Tambah item checklist baru untuk tahap ini, lalu tekan Enter...">
+  </div>
+
+  <div class="footnote">
+    <b>Cara pakai:</b> centang kotak untuk mengganti status (belum → proses → selesai). Isi PIC dan target tanggal di setiap item. Untuk bukti kegiatan, klik <b>📎 Unggah File</b> — Anda bisa memilih <b>beberapa file sekaligus</b> (foto, PDF, Word, Excel), semuanya akan muncul sebagai daftar tautan di bawah item, dan bisa dihapus satu-satu dengan tombol ×. Kolom "Tautan lain" tetap tersedia kalau Anda ingin menempel link manual (misalnya folder Drive yang sudah ada). Semua perubahan tersinkron otomatis ke Google Sheets tim setiap beberapa detik.
+  </div>
+</div>
+
+<script>
+const STAGES = [
+  {id:'persiapan', label:'Persiapan', desc:'Konsolidasi rancangan sebelum implementasi milestone.'},
+  {id:'pendek', label:'Jk. Pendek', desc:'Milestone jangka pendek (biasanya bulan ke-1 s/d 2).'},
+  {id:'menengah', label:'Jk. Menengah', desc:'Milestone jangka menengah — perluasan implementasi.'},
+  {id:'panjang', label:'Jk. Panjang', desc:'Milestone jangka panjang — institusionalisasi & keberlanjutan.'},
+];
+
+function uid(){ return 'i'+Math.random().toString(36).slice(2,10); }
+
+function defaultTemplate(){
+  const T = (stage, text) => ({id:uid(), stage, text, status:'belum', pic:'', target:'', evidence:'', attachments:[]});
+  return [
+    T('persiapan','Konsultasi rancangan aksi perubahan dengan mentor'),
+    T('persiapan','Konsultasi rancangan aksi perubahan dengan coach'),
+    T('persiapan','Penyusunan SK Tim Efektif / Tim Kerja'),
+    T('persiapan','Identifikasi & pemetaan stakeholder (net-map)'),
+    T('persiapan','Penyusunan strategi komunikasi'),
+    T('persiapan','Seminar rancangan aksi perubahan'),
+    T('pendek','Pembentukan & rapat koordinasi Tim Efektif'),
+    T('pendek','Penyusunan SOP / rancangan produk perubahan'),
+    T('pendek','Sosialisasi aksi perubahan kepada stakeholder'),
+    T('pendek','Uji coba (piloting) tahap awal'),
+    T('pendek','Evaluasi & laporan capaian milestone jangka pendek'),
+    T('menengah','Implementasi produk perubahan lebih luas'),
+    T('menengah','Monitoring & evaluasi implementasi'),
+    T('menengah','Penyempurnaan produk perubahan berdasarkan evaluasi'),
+    T('menengah','Koordinasi lanjutan dengan stakeholder kunci'),
+    T('menengah','Laporan capaian milestone jangka menengah'),
+    T('panjang','Institusionalisasi / pelembagaan produk perubahan'),
+    T('panjang','Penyusunan regulasi/kebijakan pendukung (bila perlu)'),
+    T('panjang','Evaluasi keberlanjutan (sustainability)'),
+    T('panjang','Penyusunan laporan akhir aksi perubahan'),
+    T('panjang','Seminar / presentasi laporan aksi perubahan'),
+  ];
+}
+
+let state = {
+  info:{title:'Aksi Perubahan: [judul proyek]', leader:'', instansi:'', mentor:'', coach:''},
+  items: defaultTemplate()
+};
+let activeStage = 'persiapan';
+let saveTimer = null;
+let pollTimer = null;
+let lastSyncedJSON = JSON.stringify(state);
+
+// ============ KONFIGURASI GOOGLE SHEETS ============
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbykJ_zFcqlOVZESML1PnLUVi60wKrNcbWJSBc8GS1F-iHD6hHzIKV5tjtwaI6HL6zdl/exec";
+// =====================================================
+
+const MAX_UPLOAD_BYTES = 8 * 1024 * 1024; // 8MB per file
+
+function isConfigFilled(){
+  return SCRIPT_URL && !SCRIPT_URL.startsWith('GANTI');
+}
+
+function isTypingNow(){
+  const a = document.activeElement;
+  return a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA');
+}
+
+async function loadData(){
+  if(!isConfigFilled()){
+    document.getElementById('configBanner').style.display = 'block';
+    render();
+    return;
+  }
+  try{
+    const res = await fetch(SCRIPT_URL, {method:'GET'});
+    const data = await res.json();
+    if(data && data.items && data.items.length){
+      data.items.forEach(it=>{ if(!it.attachments) it.attachments = []; });
+      state = data;
+    } else {
+      await saveData(true);
+    }
+    lastSyncedJSON = JSON.stringify(state);
+    render();
+    startPolling();
+  }catch(err){
+    console.error('Gagal memuat data', err);
+    document.getElementById('saveText').textContent = 'gagal konek ke Google Sheets';
+    render();
+  }
+}
+
+function startPolling(){
+  clearInterval(pollTimer);
+  pollTimer = setInterval(async ()=>{
+    if(isTypingNow()) return;
+    try{
+      const res = await fetch(SCRIPT_URL, {method:'GET'});
+      const data = await res.json();
+      const incomingJSON = JSON.stringify(data);
+      if(data && data.items && incomingJSON !== lastSyncedJSON){
+        data.items.forEach(it=>{ if(!it.attachments) it.attachments = []; });
+        state = data;
+        lastSyncedJSON = incomingJSON;
+        render();
+        document.getElementById('saveDot').classList.remove('saving');
+        document.getElementById('saveText').textContent = 'tersinkron dengan tim';
+      }
+    }catch(err){
+      // diamkan error polling sesekali
+    }
+  }, 6000);
+}
+
+async function saveData(silent){
+  const dot = document.getElementById('saveDot');
+  const txt = document.getElementById('saveText');
+  if(!isConfigFilled()){
+    txt.textContent = 'belum tersambung ke Google Sheets (lihat peringatan di atas)';
+    return;
+  }
+  if(!silent){ dot.classList.add('saving'); txt.textContent = 'menyimpan…'; }
+  try{
+    await fetch(SCRIPT_URL, {
+      method:'POST',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({ type:'state', payload: state })
+    });
+    lastSyncedJSON = JSON.stringify(state);
+    if(!silent){ dot.classList.remove('saving'); txt.textContent = 'tersinkron dengan tim'; }
+  }catch(err){
+    console.error('Gagal menyimpan', err);
+    txt.textContent = 'gagal menyimpan — cek koneksi';
+  }
+}
+function queueSave(){
+  clearTimeout(saveTimer);
+  document.getElementById('saveText').textContent = 'mengetik…';
+  saveTimer = setTimeout(()=>saveData(false), 600);
+}
+
+function fileToBase64(file){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onload = ()=> resolve(reader.result.split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function uploadFiles(item, files, fileInputEl, btnEl){
+  if(!isConfigFilled()){
+    alert('Belum tersambung ke Google Sheets. Isi SCRIPT_URL terlebih dahulu.');
+    fileInputEl.value = '';
+    return;
+  }
+  if(!item.attachments) item.attachments = [];
+  if(btnEl){ btnEl.disabled = true; btnEl.textContent = '…'; }
+  document.getElementById('saveText').textContent = `mengunggah ${files.length} file…`;
+
+  let successCount = 0;
+  let skipped = [];
+  for(const file of files){
+    if(file.size > MAX_UPLOAD_BYTES){
+      skipped.push(file.name);
+      continue;
+    }
+    try{
+      const base64 = await fileToBase64(file);
+      const res = await fetch(SCRIPT_URL, {
+        method:'POST',
+        headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body: JSON.stringify({ type:'upload', fileName:file.name, mimeType:file.type || 'application/octet-stream', data: base64 })
+      });
+      const result = await res.json();
+      if(result && result.ok && result.url){
+        item.attachments.push({ id: uid(), name: result.fileName || file.name, url: result.url });
+        successCount++;
+      } else {
+        skipped.push(file.name);
+      }
+    }catch(err){
+      console.error('Gagal upload', file.name, err);
+      skipped.push(file.name);
+    }
+  }
+
+  render();
+  queueSave();
+  if(btnEl){ btnEl.disabled = false; btnEl.textContent = '📎 Unggah File'; }
+  fileInputEl.value = '';
+
+  if(skipped.length){
+    alert('File berikut gagal/dilewati (mungkin lebih dari 8MB atau ada masalah koneksi):\n' + skipped.join('\n'));
+  }
+}
+
+function renderTabs(){
+  const tabs = document.getElementById('tabs');
+  tabs.innerHTML = '';
+  STAGES.forEach(s=>{
+    const count = state.items.filter(i=>i.stage===s.id).length;
+    const done = state.items.filter(i=>i.stage===s.id && i.status==='selesai').length;
+    const el = document.createElement('div');
+    el.className = 'tab' + (activeStage===s.id ? ' active' : '');
+    el.innerHTML = `${s.label} <span class="n">${done}/${count}</span>`;
+    el.onclick = ()=>{ activeStage = s.id; render(); };
+    tabs.appendChild(el);
+  });
+}
+
+function makeSealSVG(){
+  return `<svg class="seal" viewBox="0 0 60 60">
+    <circle cx="30" cy="30" r="27"></circle>
+    <circle cx="30" cy="30" r="21"></circle>
+    <text x="30" y="12"><textPath href="#sealpath">• SELESAI • TERVERIFIKASI</textPath></text>
+    <path id="sealpath" d="M 30,3 A 27,27 0 1,1 29.9,3" fill="none"></path>
+    <text class="center" x="30" y="35">✓</text>
+  </svg>`;
+}
+
+function renderList(){
+  const list = document.getElementById('list');
+  const stage = STAGES.find(s=>s.id===activeStage);
+  document.getElementById('stageTitle').textContent = stage.label;
+  document.getElementById('stageDesc').textContent = stage.desc;
+
+  const items = state.items.filter(i=>i.stage===activeStage);
+  list.innerHTML = '';
+  if(items.length===0){
+    list.innerHTML = `<div class="empty"><b>Belum ada item</b><br>Tambahkan item checklist di bawah untuk tahap ${stage.label}.</div>`;
+  }
+  items.forEach(item=>{
+    const attachments = item.attachments || [];
+    const div = document.createElement('div');
+    div.className = 'item status-' + item.status;
+    div.innerHTML = `
+      ${makeSealSVG()}
+      <div class="item-top">
+        <div class="check ${item.status!=='belum'?item.status:''}" data-act="toggle" data-id="${item.id}"></div>
+        <div class="item-body">
+          <input class="item-text" data-act="text" data-id="${item.id}" value="${escapeHtml(item.text)}" placeholder="Nama item checklist">
+          <span class="status-pill ${item.status}">${item.status}</span>
+        </div>
+      </div>
+      <div class="item-grid">
+        <div class="field"><label>PIC</label><input data-act="pic" data-id="${item.id}" value="${escapeHtml(item.pic)}" placeholder="Nama penanggung jawab"></div>
+        <div class="field"><label>Target Tanggal</label><input type="date" data-act="target" data-id="${item.id}" value="${item.target}"></div>
+        <button class="del-btn" data-act="del" data-id="${item.id}">Hapus item</button>
+      </div>
+      <div class="evidence-section">
+        <div class="field" style="margin-bottom:10px;">
+          <label>Tautan lain (opsional)</label>
+          <div class="evidence-row">
+            <input data-act="evidence" data-id="${item.id}" value="${escapeHtml(item.evidence)}" placeholder="Tempel link manual, misalnya folder Drive">
+            <button type="button" class="upload-btn" data-act="upload-btn" data-id="${item.id}">📎 Unggah File</button>
+            <input type="file" data-act="file-input" data-id="${item.id}" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.gif,.webp" style="display:none;" multiple>
+          </div>
+          <div class="upload-hint">Bisa pilih beberapa file sekaligus (PDF/Word/Excel/Gambar), maks 8MB per file.</div>
+        </div>
+        <div class="attachments-list">
+          ${attachments.map(a => `
+            <div class="attachment-chip">
+              <a href="${escapeHtml(a.url)}" target="_blank" rel="noopener">${escapeHtml(a.name)}</a>
+              <button type="button" class="chip-del" data-act="del-attachment" data-id="${item.id}" data-attid="${a.id}" title="Hapus lampiran ini">×</button>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+    list.appendChild(div);
+  });
+}
+
+function escapeHtml(s){
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+}
+
+function updateProgress(){
+  const total = state.items.length;
+  const done = state.items.filter(i=>i.status==='selesai').length;
+  const pct = total ? Math.round((done/total)*100) : 0;
+  const circumference = 2*Math.PI*44;
+  const offset = circumference - (pct/100)*circumference;
+  document.getElementById('ringFill').style.strokeDasharray = circumference;
+  document.getElementById('ringFill').style.strokeDashoffset = offset;
+  document.getElementById('pctText').textContent = pct + '%';
+  document.getElementById('countCaption').textContent = `${done} / ${total} item`;
+}
+
+function render(){
+  document.getElementById('projTitle').value = state.info.title;
+  document.getElementById('mLeader').value = state.info.leader;
+  document.getElementById('mInstansi').value = state.info.instansi;
+  document.getElementById('mMentor').value = state.info.mentor;
+  document.getElementById('mCoach').value = state.info.coach;
+  renderTabs();
+  renderList();
+  updateProgress();
+}
+
+document.getElementById('list').addEventListener('click', (e)=>{
+  const t = e.target.closest('[data-act]');
+  if(!t) return;
+  const id = t.dataset.id;
+  const item = state.items.find(i=>i.id===id);
+  if(t.dataset.act === 'toggle'){
+    const order = ['belum','proses','selesai'];
+    item.status = order[(order.indexOf(item.status)+1)%3];
+    render(); queueSave();
+  } else if(t.dataset.act === 'del'){
+    state.items = state.items.filter(i=>i.id!==id);
+    render(); queueSave();
+  } else if(t.dataset.act === 'upload-btn'){
+    const fileInput = document.querySelector(`input[data-act="file-input"][data-id="${id}"]`);
+    if(fileInput) fileInput.click();
+  } else if(t.dataset.act === 'del-attachment'){
+    const attId = t.dataset.attid;
+    item.attachments = (item.attachments||[]).filter(a=>a.id!==attId);
+    render(); queueSave();
+  }
+});
+
+document.getElementById('list').addEventListener('change', async (e)=>{
+  const t = e.target.closest('[data-act="file-input"]');
+  if(!t) return;
+  const id = t.dataset.id;
+  const files = Array.from(t.files || []);
+  if(!files.length) return;
+  const item = state.items.find(i=>i.id===id);
+  const btn = document.querySelector(`button[data-act="upload-btn"][data-id="${id}"]`);
+  await uploadFiles(item, files, t, btn);
+});
+
+document.getElementById('list').addEventListener('input', (e)=>{
+  const t = e.target.closest('[data-act]');
+  if(!t) return;
+  const id = t.dataset.id;
+  const item = state.items.find(i=>i.id===id);
+  const act = t.dataset.act;
+  if(act==='text') item.text = t.value;
+  if(act==='pic') item.pic = t.value;
+  if(act==='target') item.target = t.value;
+  if(act==='evidence') item.evidence = t.value;
+  queueSave();
+});
+
+document.getElementById('addInput').addEventListener('keydown', (e)=>{
+  if(e.key==='Enter' && e.target.value.trim()){
+    state.items.push({id:uid(), stage:activeStage, text:e.target.value.trim(), status:'belum', pic:'', target:'', evidence:'', attachments:[]});
+    e.target.value='';
+    render(); queueSave();
+  }
+});
+
+['projTitle','mLeader','mInstansi','mMentor','mCoach'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', (e)=>{
+    const map = {projTitle:'title', mLeader:'leader', mInstansi:'instansi', mMentor:'mentor', mCoach:'coach'};
+    state.info[map[id]] = e.target.value;
+    queueSave();
+  });
+});
+
+loadData();
+</script>
+</body>
+</html>
