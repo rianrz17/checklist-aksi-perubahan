@@ -140,7 +140,7 @@ body{
 .status-pill.proses{background:var(--amber-bg);color:var(--amber);}
 .status-pill.selesai{background:var(--green-bg);color:var(--green);}
 
-.item-grid{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;margin-top:12px;}
+.item-grid{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:10px;margin-top:12px;align-items:end;}
 .field label{display:block;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-soft);margin-bottom:3px;}
 .field input{
   width:100%;border:1px solid var(--paper-line);border-radius:6px;padding:7px 9px;
@@ -221,6 +221,7 @@ body{
 @media (max-width:720px){
   .item-grid{grid-template-columns:1fr 1fr;}
   .del-btn{grid-column:span 2;}
+  .item-grid .field:nth-child(3){grid-column:span 2;}
   .letterhead-top{flex-direction:column;}
   .meta-grid{max-width:100%;}
   .evidence-row{flex-wrap:wrap;}
@@ -305,12 +306,17 @@ function defaultTemplate(){
     T('pendek','Sosialisasi aksi perubahan kepada stakeholder'),
     T('pendek','Uji coba (piloting) tahap awal'),
     T('pendek','Evaluasi & laporan capaian milestone jangka pendek'),
-    T('menengah','Koordinasi dengan BWS wilayah IV samarinda terkait integrasi data '),
-    T('menengah','Integrasi data pos duga air BWS kedalam sistem SiCasma'),
-    T('menengah','Pengukuran Dampak dan Evaluasi Indeks Kepuasan Masyarakat (IKM)'),
+    T('menengah','Implementasi produk perubahan lebih luas'),
+    T('menengah','Monitoring & evaluasi implementasi'),
+    T('menengah','Penyempurnaan produk perubahan berdasarkan evaluasi'),
+    T('menengah','Koordinasi lanjutan dengan stakeholder kunci'),
+    T('menengah','Laporan capaian milestone jangka menengah'),
     T('panjang','Institusionalisasi / pelembagaan produk perubahan'),
-    T('panjang','Replikasi model SiCASMA untuk wilayah perairan darat stasiun BMKG lainnya'),
-    ];
+    T('panjang','Penyusunan regulasi/kebijakan pendukung (bila perlu)'),
+    T('panjang','Evaluasi keberlanjutan (sustainability)'),
+    T('panjang','Penyusunan laporan akhir aksi perubahan'),
+    T('panjang','Seminar / presentasi laporan aksi perubahan'),
+  ];
 }
 
 let state = {
@@ -511,13 +517,19 @@ function renderList(){
       <div class="item-top">
         <div class="check ${item.status!=='belum'?item.status:''}" data-act="toggle" data-id="${item.id}"></div>
         <div class="item-body">
-          <input class="item-text" data-act="text" data-id="${item.id}" value="${escapeHtml(item.text)}" placeholder="Nama item checklist">
+          <input class="item-text" data-act="text" data-id="${item.id}" value="${escapeHtml(item.text)}" placeholder="Nama item checklist" data-original="${escapeHtml(item.text)}">
           <span class="status-pill ${item.status}">${item.status}</span>
         </div>
       </div>
       <div class="item-grid">
         <div class="field"><label>PIC</label><input data-act="pic" data-id="${item.id}" value="${escapeHtml(item.pic)}" placeholder="Nama penanggung jawab"></div>
         <div class="field"><label>Target Tanggal</label><input type="date" data-act="target" data-id="${item.id}" value="${item.target}"></div>
+        <div class="field">
+          <label>Pindah ke Tahap</label>
+          <select data-act="move-stage" data-id="${item.id}" style="width:100%;border:1px solid var(--paper-line);border-radius:6px;padding:7px 9px;font-size:13px;font-family:inherit;background:#FBF9F3;color:var(--text);">
+            ${STAGES.map(s => `<option value="${s.id}" ${s.id===item.stage?'selected':''}>${s.label}</option>`).join('')}
+          </select>
+        </div>
         <button class="del-btn" data-act="del" data-id="${item.id}">Hapus item</button>
       </div>
       <div class="evidence-section">
@@ -581,8 +593,11 @@ document.getElementById('list').addEventListener('click', (e)=>{
     item.status = order[(order.indexOf(item.status)+1)%3];
     render(); queueSave();
   } else if(t.dataset.act === 'del'){
-    state.items = state.items.filter(i=>i.id!==id);
-    render(); queueSave();
+    const konfirmasi = confirm(`Yakin mau hapus item "${item.text}"? Lampiran file yang sudah diunggah tidak akan ikut terhapus dari Drive, hanya tautannya saja yang hilang dari checklist.`);
+    if(konfirmasi){
+      state.items = state.items.filter(i=>i.id!==id);
+      render(); queueSave();
+    }
   } else if(t.dataset.act === 'upload-btn'){
     const fileInput = document.querySelector(`input[data-act="file-input"][data-id="${id}"]`);
     if(fileInput) fileInput.click();
@@ -594,14 +609,25 @@ document.getElementById('list').addEventListener('click', (e)=>{
 });
 
 document.getElementById('list').addEventListener('change', async (e)=>{
-  const t = e.target.closest('[data-act="file-input"]');
-  if(!t) return;
-  const id = t.dataset.id;
-  const files = Array.from(t.files || []);
-  if(!files.length) return;
-  const item = state.items.find(i=>i.id===id);
-  const btn = document.querySelector(`button[data-act="upload-btn"][data-id="${id}"]`);
-  await uploadFiles(item, files, t, btn);
+  const fileInput = e.target.closest('[data-act="file-input"]');
+  if(fileInput){
+    const id = fileInput.dataset.id;
+    const files = Array.from(fileInput.files || []);
+    if(!files.length) return;
+    const item = state.items.find(i=>i.id===id);
+    const btn = document.querySelector(`button[data-act="upload-btn"][data-id="${id}"]`);
+    await uploadFiles(item, files, fileInput, btn);
+    return;
+  }
+  const stageSelect = e.target.closest('[data-act="move-stage"]');
+  if(stageSelect){
+    const id = stageSelect.dataset.id;
+    const item = state.items.find(i=>i.id===id);
+    item.stage = stageSelect.value;
+    activeStage = stageSelect.value;
+    render(); queueSave();
+    return;
+  }
 });
 
 document.getElementById('list').addEventListener('input', (e)=>{
@@ -610,11 +636,45 @@ document.getElementById('list').addEventListener('input', (e)=>{
   const id = t.dataset.id;
   const item = state.items.find(i=>i.id===id);
   const act = t.dataset.act;
-  if(act==='text') item.text = t.value;
+  // nama kegiatan (act==='text') SENGAJA tidak disimpan otomatis saat mengetik -- lihat listener 'blur' di bawah
   if(act==='pic') item.pic = t.value;
   if(act==='target') item.target = t.value;
   if(act==='evidence') item.evidence = t.value;
   queueSave();
+});
+
+// Konfirmasi sebelum menyimpan perubahan nama kegiatan
+document.getElementById('list').addEventListener('focusout', (e)=>{
+  const t = e.target.closest('.item-text[data-act="text"]');
+  if(!t) return;
+  const id = t.dataset.id;
+  const item = state.items.find(i=>i.id===id);
+  if(!item) return;
+  const original = t.dataset.original;
+  const newValue = t.value.trim();
+  if(newValue === original) return; // tidak ada perubahan, tidak perlu konfirmasi
+  if(newValue === ''){
+    alert('Nama kegiatan tidak boleh kosong.');
+    t.value = original;
+    return;
+  }
+  const konfirmasi = confirm(`Simpan perubahan nama kegiatan menjadi:\n\n"${newValue}"\n\n(Sebelumnya: "${original}")`);
+  if(konfirmasi){
+    item.text = newValue;
+    t.dataset.original = newValue;
+    queueSave();
+  } else {
+    t.value = original;
+  }
+});
+
+document.getElementById('list').addEventListener('keydown', (e)=>{
+  const t = e.target.closest('.item-text[data-act="text"]');
+  if(!t) return;
+  if(e.key === 'Enter'){
+    e.preventDefault();
+    t.blur(); // memicu konfirmasi di listener focusout
+  }
 });
 
 document.getElementById('addInput').addEventListener('keydown', (e)=>{
