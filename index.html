@@ -238,7 +238,7 @@ body{
   <div class="letterhead">
     <div class="letterhead-top">
       <div style="flex:2 1 340px;min-width:0;">
-        <div class="eyebrow">Lembar Kendali · Proyek Perubahan PKA Angkatan VIII Tahun 2026</div>
+        <div class="eyebrow">Lembar Kendali · Proyek Perubahan</div>
         <input id="projTitle" class="title-input" placeholder="Judul Aksi Perubahan..." />
         <div class="meta-grid">
           <div class="meta-field"><label>Project Leader</label><input id="mLeader" placeholder="Nama"></div>
@@ -278,7 +278,7 @@ body{
   </div>
 
   <div class="footnote">
-    <b>Cara pakai:</b> centang kotak untuk mengganti status (belum → proses → selesai). Isi PIC dan target tanggal di setiap item. Untuk bukti kegiatan, klik <b>📎 Unggah File</b> — Anda bisa memilih <b>beberapa file sekaligus</b> (foto, PDF, Word, Excel), semuanya akan muncul sebagai daftar tautan di bawah item, dan bisa dihapus satu-satu dengan tombol ×. Kolom "Tautan lain" tetap tersedia kalau Anda ingin menempel link manual (misalnya folder Drive yang sudah ada). Semua perubahan tersinkron otomatis ke Google Sheets tim setiap beberapa detik.
+    <b>Cara pakai:</b> centang kotak untuk mengganti status (belum → proses → selesai). Isi PIC dan target tanggal di setiap item. Untuk bukti kegiatan, klik <b>📎 Unggah File</b> — Anda bisa memilih <b>beberapa file sekaligus</b> (foto, video, PDF, Word, Excel), semuanya akan muncul sebagai daftar tautan di bawah item, dan bisa dihapus satu-satu dengan tombol ×. Video dibatasi maks 20MB per file; kalau lebih besar, unggah manual ke Google Drive lalu tempel link-nya di kolom "Tautan lain". Semua perubahan tersinkron otomatis ke Google Sheets tim setiap beberapa detik.
   </div>
 </div>
 
@@ -332,7 +332,7 @@ let lastSyncedJSON = JSON.stringify(state);
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbykJ_zFcqlOVZESML1PnLUVi60wKrNcbWJSBc8GS1F-iHD6hHzIKV5tjtwaI6HL6zdl/exec";
 // =====================================================
 
-const MAX_UPLOAD_BYTES = 8 * 1024 * 1024; // 8MB per file
+const MAX_UPLOAD_BYTES = 20 * 1024 * 1024; // 20MB per file (video butuh lebih besar dari dokumen/gambar)
 
 function isConfigFilled(){
   return SCRIPT_URL && !SCRIPT_URL.startsWith('GANTI');
@@ -469,7 +469,7 @@ async function uploadFiles(item, files, fileInputEl, btnEl){
   fileInputEl.value = '';
 
   if(skipped.length){
-    alert('File berikut gagal/dilewati (mungkin lebih dari 8MB atau ada masalah koneksi):\n' + skipped.join('\n'));
+    alert('File berikut gagal/dilewati (mungkin lebih dari 20MB atau ada masalah koneksi):\n' + skipped.join('\n'));
   }
 }
 
@@ -538,9 +538,9 @@ function renderList(){
           <div class="evidence-row">
             <input data-act="evidence" data-id="${item.id}" value="${escapeHtml(item.evidence)}" placeholder="Tempel link manual, misalnya folder Drive">
             <button type="button" class="upload-btn" data-act="upload-btn" data-id="${item.id}">📎 Unggah File</button>
-            <input type="file" data-act="file-input" data-id="${item.id}" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.gif,.webp" style="display:none;" multiple>
+            <input type="file" data-act="file-input" data-id="${item.id}" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.gif,.webp,.mp4,.mov,.avi,.webm,.mkv,.3gp" style="display:none;" multiple>
           </div>
-          <div class="upload-hint">Bisa pilih beberapa file sekaligus (PDF/Word/Excel/Gambar), maks 8MB per file.</div>
+          <div class="upload-hint">Bisa pilih beberapa file sekaligus (PDF/Word/Excel/Gambar/Video), maks 20MB per file. Video yang lebih besar: unggah manual ke Google Drive lalu tempel link-nya di kolom "Tautan lain".</div>
         </div>
         <div class="attachments-list">
           ${attachments.map(a => `
