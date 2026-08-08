@@ -23,6 +23,8 @@
   --amber-bg:#F5EDD9;
   --red:#A63D2F;
   --red-bg:#F3E4DF;
+  --blue:#2C5F8A;
+  --blue-bg:#E4EDF3;
   --radius:10px;
 }
 *{box-sizing:border-box;}
@@ -154,6 +156,7 @@ body{
 .del-btn:hover{border-color:var(--red);color:var(--red);}
 
 .evidence-section{margin-top:12px;border-top:1px dashed var(--paper-line);padding-top:12px;}
+.evidence-block{margin-bottom:12px;}
 .evidence-row{display:flex;gap:6px;align-items:center;}
 .evidence-row input{
   flex:1;min-width:0;border:1px solid var(--paper-line);border-radius:6px;padding:7px 9px;
@@ -176,6 +179,7 @@ body{
 }
 .attachment-chip a{color:var(--navy);text-decoration:none;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:220px;}
 .attachment-chip a:hover{text-decoration:underline;}
+.attachment-chip.link-chip{background:var(--blue-bg);border-color:rgba(44,95,138,0.3);}
 .chip-del{
   flex:none;width:18px;height:18px;border-radius:50%;border:none;background:rgba(0,0,0,0.08);
   color:var(--text-soft);cursor:pointer;font-size:12px;line-height:1;display:flex;align-items:center;justify-content:center;
@@ -278,7 +282,7 @@ body{
   </div>
 
   <div class="footnote">
-    <b>Cara pakai:</b> centang kotak untuk mengganti status (belum → proses → selesai). Isi PIC dan target tanggal di setiap item. Untuk bukti kegiatan, klik <b>📎 Unggah File</b> — Anda bisa memilih <b>beberapa file sekaligus</b> (foto, video, PDF, Word, Excel), semuanya akan muncul sebagai daftar tautan di bawah item, dan bisa dihapus satu-satu dengan tombol ×. Video dibatasi maks 20MB per file; kalau lebih besar, unggah manual ke Google Drive lalu tempel link-nya di kolom "Tautan lain". Semua perubahan tersinkron otomatis ke Google Sheets tim setiap beberapa detik.
+    <b>Cara pakai:</b> centang kotak untuk mengganti status (belum → proses → selesai). Isi PIC dan target tanggal di setiap item. Untuk bukti kegiatan, klik <b>📎 Unggah File</b> — Anda bisa memilih <b>beberapa file sekaligus</b> (foto, video, PDF, Word, Excel), semuanya akan muncul sebagai daftar tautan di bawah item, dan bisa dihapus satu-satu dengan tombol ×. File dibatasi maks 20MB per file. Untuk file yang lebih besar (misalnya video), unggah manual ke Google Drive lalu tempel link-nya di kolom <b>"Tautan Drive lain"</b> — Anda bisa menambahkan <b>lebih dari satu link</b> di kolom ini, satu per satu, dan setiap link juga bisa dihapus terpisah. Semua perubahan tersinkron otomatis ke Google Sheets tim setiap beberapa detik.
   </div>
 </div>
 
@@ -293,7 +297,7 @@ const STAGES = [
 function uid(){ return 'i'+Math.random().toString(36).slice(2,10); }
 
 function defaultTemplate(){
-  const T = (stage, text) => ({id:uid(), stage, text, status:'belum', pic:'', target:'', evidence:'', attachments:[]});
+  const T = (stage, text) => ({id:uid(), stage, text, status:'belum', pic:'', target:'', links:[], attachments:[]});
   return [
     T('persiapan','Konsultasi rancangan aksi perubahan dengan mentor'),
     T('persiapan','Konsultasi rancangan aksi perubahan dengan coach'),
@@ -332,7 +336,7 @@ let lastSyncedJSON = JSON.stringify(state);
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbykJ_zFcqlOVZESML1PnLUVi60wKrNcbWJSBc8GS1F-iHD6hHzIKV5tjtwaI6HL6zdl/exec";
 // =====================================================
 
-const MAX_UPLOAD_BYTES = 20 * 1024 * 1024; // 20MB per file (video butuh lebih besar dari dokumen/gambar)
+const MAX_UPLOAD_BYTES = 20 * 1024 * 1024; // 20MB per file
 
 function isConfigFilled(){
   return SCRIPT_URL && !SCRIPT_URL.startsWith('GANTI');
@@ -341,6 +345,17 @@ function isConfigFilled(){
 function isTypingNow(){
   const a = document.activeElement;
   return a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA');
+}
+
+function normalizeItem(it){
+  if(!it.attachments) it.attachments = [];
+  if(!it.links) it.links = [];
+  // migrasi data lama: kolom "evidence" tunggal dipindahkan jadi link pertama
+  if(it.evidence && it.evidence.trim()){
+    it.links.push({ id: uid(), url: it.evidence.trim() });
+    it.evidence = '';
+  }
+  return it;
 }
 
 async function loadData(){
@@ -353,7 +368,7 @@ async function loadData(){
     const res = await fetch(SCRIPT_URL, {method:'GET'});
     const data = await res.json();
     if(data && data.items && data.items.length){
-      data.items.forEach(it=>{ if(!it.attachments) it.attachments = []; });
+      data.items.forEach(normalizeItem);
       state = data;
     } else {
       await saveData(true);
@@ -377,7 +392,7 @@ function startPolling(){
       const data = await res.json();
       const incomingJSON = JSON.stringify(data);
       if(data && data.items && incomingJSON !== lastSyncedJSON){
-        data.items.forEach(it=>{ if(!it.attachments) it.attachments = []; });
+        data.items.forEach(normalizeItem);
         state = data;
         lastSyncedJSON = incomingJSON;
         render();
@@ -510,6 +525,7 @@ function renderList(){
   }
   items.forEach(item=>{
     const attachments = item.attachments || [];
+    const links = item.links || [];
     const div = document.createElement('div');
     div.className = 'item status-' + item.status;
     div.innerHTML = `
@@ -533,22 +549,36 @@ function renderList(){
         <button class="del-btn" data-act="del" data-id="${item.id}">Hapus item</button>
       </div>
       <div class="evidence-section">
-        <div class="field" style="margin-bottom:10px;">
-          <label>Tautan lain (opsional)</label>
+        <div class="evidence-block">
+          <label class="field-label" style="display:block;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-soft);margin-bottom:3px;">Unggah File (maks 20MB per file)</label>
           <div class="evidence-row">
-            <input data-act="evidence" data-id="${item.id}" value="${escapeHtml(item.evidence)}" placeholder="Tempel link manual, misalnya folder Drive">
             <button type="button" class="upload-btn" data-act="upload-btn" data-id="${item.id}">📎 Unggah File</button>
             <input type="file" data-act="file-input" data-id="${item.id}" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.gif,.webp,.mp4,.mov,.avi,.webm,.mkv,.3gp" style="display:none;" multiple>
           </div>
-          <div class="upload-hint">Bisa pilih beberapa file sekaligus (PDF/Word/Excel/Gambar/Video), maks 20MB per file. Video yang lebih besar: unggah manual ke Google Drive lalu tempel link-nya di kolom "Tautan lain".</div>
+          <div class="attachments-list">
+            ${attachments.map(a => `
+              <div class="attachment-chip">
+                <a href="${escapeHtml(a.url)}" target="_blank" rel="noopener">${escapeHtml(a.name)}</a>
+                <button type="button" class="chip-del" data-act="del-attachment" data-id="${item.id}" data-attid="${a.id}" title="Hapus lampiran ini">×</button>
+              </div>
+            `).join('')}
+          </div>
         </div>
-        <div class="attachments-list">
-          ${attachments.map(a => `
-            <div class="attachment-chip">
-              <a href="${escapeHtml(a.url)}" target="_blank" rel="noopener">${escapeHtml(a.name)}</a>
-              <button type="button" class="chip-del" data-act="del-attachment" data-id="${item.id}" data-attid="${a.id}" title="Hapus lampiran ini">×</button>
-            </div>
-          `).join('')}
+        <div class="evidence-block">
+          <label class="field-label" style="display:block;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-soft);margin-bottom:3px;">Tautan Drive lain (bisa lebih dari satu)</label>
+          <div class="evidence-row">
+            <input data-act="link-input" data-id="${item.id}" placeholder="Tempel link Drive, lalu tekan Enter atau klik Tambah">
+            <button type="button" class="upload-btn" data-act="add-link" data-id="${item.id}">+ Tambah</button>
+          </div>
+          <div class="upload-hint">Tambahkan satu link per baris — cocok untuk video/berkas besar yang sudah diunggah manual ke Google Drive.</div>
+          <div class="attachments-list">
+            ${links.map(l => `
+              <div class="attachment-chip link-chip">
+                <a href="${escapeHtml(l.url)}" target="_blank" rel="noopener">${escapeHtml(l.url)}</a>
+                <button type="button" class="chip-del" data-act="del-link" data-id="${item.id}" data-linkid="${l.id}" title="Hapus link ini">×</button>
+              </div>
+            `).join('')}
+          </div>
         </div>
       </div>
     `;
@@ -583,6 +613,18 @@ function render(){
   updateProgress();
 }
 
+function addLinkFromInput(id){
+  const input = document.querySelector(`input[data-act="link-input"][data-id="${id}"]`);
+  if(!input) return;
+  const url = input.value.trim();
+  if(!url) return;
+  const item = state.items.find(i=>i.id===id);
+  if(!item.links) item.links = [];
+  item.links.push({ id: uid(), url });
+  render();
+  queueSave();
+}
+
 document.getElementById('list').addEventListener('click', (e)=>{
   const t = e.target.closest('[data-act]');
   if(!t) return;
@@ -593,7 +635,7 @@ document.getElementById('list').addEventListener('click', (e)=>{
     item.status = order[(order.indexOf(item.status)+1)%3];
     render(); queueSave();
   } else if(t.dataset.act === 'del'){
-    const konfirmasi = confirm(`Yakin mau hapus item "${item.text}"? Lampiran file yang sudah diunggah tidak akan ikut terhapus dari Drive, hanya tautannya saja yang hilang dari checklist.`);
+    const konfirmasi = confirm(`Yakin mau hapus item "${item.text}"? Lampiran file/link yang sudah ditambahkan tidak akan ikut terhapus dari Drive, hanya tautannya saja yang hilang dari checklist.`);
     if(konfirmasi){
       state.items = state.items.filter(i=>i.id!==id);
       render(); queueSave();
@@ -605,6 +647,26 @@ document.getElementById('list').addEventListener('click', (e)=>{
     const attId = t.dataset.attid;
     item.attachments = (item.attachments||[]).filter(a=>a.id!==attId);
     render(); queueSave();
+  } else if(t.dataset.act === 'add-link'){
+    addLinkFromInput(id);
+  } else if(t.dataset.act === 'del-link'){
+    const linkId = t.dataset.linkid;
+    item.links = (item.links||[]).filter(l=>l.id!==linkId);
+    render(); queueSave();
+  }
+});
+
+document.getElementById('list').addEventListener('keydown', (e)=>{
+  const linkInput = e.target.closest('[data-act="link-input"]');
+  if(linkInput && e.key === 'Enter'){
+    e.preventDefault();
+    addLinkFromInput(linkInput.dataset.id);
+    return;
+  }
+  const t = e.target.closest('.item-text[data-act="text"]');
+  if(t && e.key === 'Enter'){
+    e.preventDefault();
+    t.blur(); // memicu konfirmasi di listener focusout
   }
 });
 
@@ -636,11 +698,10 @@ document.getElementById('list').addEventListener('input', (e)=>{
   const id = t.dataset.id;
   const item = state.items.find(i=>i.id===id);
   const act = t.dataset.act;
-  // nama kegiatan (act==='text') SENGAJA tidak disimpan otomatis saat mengetik -- lihat listener 'blur' di bawah
+  // nama kegiatan (act==='text') SENGAJA tidak disimpan otomatis saat mengetik -- lihat listener 'focusout' di bawah
   if(act==='pic') item.pic = t.value;
   if(act==='target') item.target = t.value;
-  if(act==='evidence') item.evidence = t.value;
-  queueSave();
+  if(act==='pic' || act==='target') queueSave();
 });
 
 // Konfirmasi sebelum menyimpan perubahan nama kegiatan
@@ -668,18 +729,9 @@ document.getElementById('list').addEventListener('focusout', (e)=>{
   }
 });
 
-document.getElementById('list').addEventListener('keydown', (e)=>{
-  const t = e.target.closest('.item-text[data-act="text"]');
-  if(!t) return;
-  if(e.key === 'Enter'){
-    e.preventDefault();
-    t.blur(); // memicu konfirmasi di listener focusout
-  }
-});
-
 document.getElementById('addInput').addEventListener('keydown', (e)=>{
   if(e.key==='Enter' && e.target.value.trim()){
-    state.items.push({id:uid(), stage:activeStage, text:e.target.value.trim(), status:'belum', pic:'', target:'', evidence:'', attachments:[]});
+    state.items.push({id:uid(), stage:activeStage, text:e.target.value.trim(), status:'belum', pic:'', target:'', links:[], attachments:[]});
     e.target.value='';
     render(); queueSave();
   }
